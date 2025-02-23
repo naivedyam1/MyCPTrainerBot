@@ -91,6 +91,15 @@ def get_leaderboard(limit=10):
     return leaderboard
 
 
+def get_user_by_chat_id(chat_id: int):
+    conn = sqlite3.connect("mycptrainer.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE chat_id = ?", (chat_id,))
+    user = cursor.fetchone()
+    conn.close()
+    return user
+
+
 #--------------------------------------------CODEFORCES API-----------------------------------------------------------
 
 
@@ -220,6 +229,15 @@ async def verify_handle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "Usage: /verify <your handle>\nFor example: /verify naivedyam"
         )
         return
+    chat_id = update.effective_chat.id
+    user_record = get_user_by_chat_id(chat_id)
+    if user_record is not None:
+        linked_handle = user_record[1]
+        await update.message.reply_text(
+            f"You have already linked this Telegram account to the Codeforces handle '{linked_handle}'.\n"
+            "You are only allowed to link one Codeforces account to a Telegram ID."
+        )
+        return
     handle = context.args[0]
     token = str(uuid.uuid4())[:8]
     problems = get_problems()
@@ -301,15 +319,15 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    about_text = "Welcome to MyCPTrainer - your own personal trainer to train your" \
-                 "way to your dream titles on Codeforces. My main job is to provide you" \
-                 "the right kind of problems for you to improve and your job is to" \
-                 "try to maintain your streak ethically. Each day you solve the two problems" \
-                 "I give you, your daily streak would increase by one. But a day missed and the" \
-                 "streak is gone! However, be honest with yourself through the journey and try not to" \
-                 "see the editorial or copy paste the code until you have given the problems a fair" \
-                 "try of atleast 2 hours each. However, try to solve the easier ones in 30 mins and the" \
-                 "harder ones in an hour or two."
+    about_text = "Welcome to MyCPTrainer - your own personal trainer to train your " \
+                 "way to your dream titles on Codeforces. My main job is to provide you " \
+                 "the right kind of problems so that you can improve while your job is to " \
+                 "try to maintain your streak ethically. Each day, if you solve the two problems " \
+                 "I give you, your daily streak would increase by one. But a day missed and the " \
+                 "streak is gone! However, be honest with yourself through the journey and do not " \
+                 "see the editorial or copy paste the code until you have given the problems a fair " \
+                 "try of atleast 2 hours each. However, try to solve the easier ones in 30 mins and the " \
+                 "harder ones in an hour or two. \n\n"
     await update.message.reply_text(about_text)
 
 
